@@ -1,6 +1,7 @@
 Plans
 =====
 
+- [x] Constrained recipe search (allowed dyes, patterns and layers, built-in renderer)
 - [ ] A custom image renderer for the subset of SVG that is in use
 - [ ] Render smaller images when evolving
 - [ ] Random generator counter

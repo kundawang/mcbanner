@@ -140,7 +140,50 @@ func NewPattern(patId, Color int) (*Pattern, error) {
 	return pat, nil
 }
 
+// patternCanvas is the subset of drawing operations used by DrawPattern.
+// Both *tinysvg.Tag (through svgCanvas) and the pure Go preview rasterizer
+// implement it, which keeps the SVG output and the preview pixels in sync.
+type patternCanvas interface {
+	Box(x, y, w, h int, color string)
+	Line(x1, y1, x2, y2, thickness int, color string)
+	Triangle(x1, y1, x2, y2, x3, y3 int, color string)
+	Circle(x, y, radius int, color string)
+	Ellipse(x, y, xr, yr int, color string)
+	Poly4(x1, y1, x2, y2, x3, y3, x4, y4 int, color string)
+}
+
+// svgCanvas adapts a tinysvg tag to patternCanvas.
+type svgCanvas struct {
+	svg *tinysvg.Tag
+}
+
+func (c svgCanvas) Box(x, y, w, h int, color string) { c.svg.Box(x, y, w, h, color) }
+
+func (c svgCanvas) Line(x1, y1, x2, y2, thickness int, color string) {
+	c.svg.Line(x1, y1, x2, y2, thickness, color)
+}
+
+func (c svgCanvas) Triangle(x1, y1, x2, y2, x3, y3 int, color string) {
+	c.svg.Triangle(x1, y1, x2, y2, x3, y3, color)
+}
+
+func (c svgCanvas) Circle(x, y, radius int, color string) { c.svg.Circle(x, y, radius, color) }
+
+func (c svgCanvas) Ellipse(x, y, xr, yr int, color string) {
+	c.svg.Ellipse(x, y, xr, yr, color)
+}
+
+func (c svgCanvas) Poly4(x1, y1, x2, y2, x3, y3, x4, y4 int, color string) {
+	c.svg.Poly4(x1, y1, x2, y2, x3, y3, x4, y4, color)
+}
+
+// DrawPattern draws the given pattern onto an SVG tag.
 func DrawPattern(svg *tinysvg.Tag, Pattern int, Color string) {
+	drawPattern(svgCanvas{svg}, Pattern, Color)
+}
+
+// drawPattern draws a single pattern onto any patternCanvas.
+func drawPattern(svg patternCanvas, Pattern int, Color string) {
 	switch Pattern {
 	case PatternLowerThird: // Base Fess Banner
 		svg.Box(0, fullH-thirdH, fullW, fullH-thirdH, Color)
@@ -375,12 +418,27 @@ func DrawPattern(svg *tinysvg.Tag, Pattern int, Color string) {
 }
 
 func (pat *Pattern) PatternString() string {
-	desc, ok := PatternDesc[pat.pattern]
-	if !ok {
-		return "Unknown Pattern"
-	}
-	return desc
+	return PatternName(pat.pattern)
 }
+
+// PatternName returns the Minecraft description of a pattern ID.
+func PatternName(pattern int) string {
+	if desc, ok := PatternDesc[pattern]; ok {
+		return desc
+	}
+	return "Unknown Pattern"
+}
+
+// ColorName returns the Minecraft name of a dye ID.
+func ColorName(color int) string {
+	return (&Pattern{color: color}).ColorString()
+}
+
+// ID returns the pattern ID.
+func (pat *Pattern) ID() int { return pat.pattern }
+
+// Dye returns the dye/color ID.
+func (pat *Pattern) Dye() int { return pat.color }
 
 // TODO: Switch the switch with a lookup like in PatternString
 func (pat *Pattern) ColorString() string {

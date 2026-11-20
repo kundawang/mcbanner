@@ -43,13 +43,17 @@ func (b *Banner) AddPattern(p *Pattern) {
 }
 
 func (b *Banner) Draw(svg *tinysvg.Tag) {
-	// draw each Pattern
+	b.drawTo(svgCanvas{svg})
+}
+
+// drawTo draws each pattern onto any patternCanvas (SVG or the preview rasterizer).
+func (b *Banner) drawTo(canvas patternCanvas) {
 	for _, p := range b.Patterns {
 		color, ok := colors[p.color]
 		if !ok {
 			log.Fatalln("Invalid color ID: ", p.color)
 		}
-		DrawPattern(svg, p.pattern, color)
+		drawPattern(canvas, p.pattern, color)
 	}
 }
 
